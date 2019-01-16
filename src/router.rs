@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::{
+    body::Body,
     endpoint::{BoxedEndpoint, Endpoint},
     Middleware,
 };
@@ -180,7 +181,7 @@ struct ResourceData<Data> {
     middleware: Vec<Arc<dyn Middleware<Data> + Send + Sync>>,
 }
 
-impl<'a, Data> Resource<'a, Data> {
+impl<'a, Data: Send + Sync + Clone + 'static> Resource<'a, Data> {
     /// "Nest" a subrouter to the path.
     ///
     /// This method will build a fresh `Router` and give a mutable reference to it to the builder
@@ -208,11 +209,22 @@ impl<'a, Data> Resource<'a, Data> {
             *resource = Some(new_resource);
         }
         let resource = resource.as_mut().unwrap();
-
         if resource.endpoints.contains_key(&method) {
             panic!("A {} endpoint already exists for this path", method)
         }
 
+        if !resource.endpoints.contains_key(&http::Method::OPTIONS) {
+            let callback = async move || {
+                http::Response::builder()
+                    .status(http::status::StatusCode::OK)
+                    .header("Content-Type", "text/plain")
+                    .body(Body::empty())
+                    .unwrap()
+            };
+            resource
+                .endpoints
+                .insert(http::Method::OPTIONS, BoxedEndpoint::new(callback));
+        }
         resource.endpoints.insert(method, BoxedEndpoint::new(ep));
     }
 
