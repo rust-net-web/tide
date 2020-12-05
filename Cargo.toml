@@ -34,8 +34,8 @@ unstable = []
 
 [dependencies]
 async-h1 = { version = "2.1.2", optional = true }
-async-session  = { version = "2.0.1", optional = true }
-async-sse = "4.0.1"
+async-session = { version = "2.0.1", optional = true }
+async-sse = "5.0.0"
 async-std = { version = "1.6.5", features = ["unstable"] }
 async-trait = "0.1.41"
 femme = { version = "2.1.1", optional = true }
