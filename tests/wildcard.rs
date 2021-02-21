@@ -22,18 +22,22 @@ async fn add_two(req: Request<()>) -> Result<String, tide::Error> {
     Ok((one + two).to_string())
 }
 
-async fn echo_path(req: Request<()>) -> Result<String, tide::Error> {
-    match req.param("path") {
+async fn echo_param(req: Request<()>) -> tide::Result<tide::Response> {
+    match req.param("param") {
         Ok(path) => Ok(path.into()),
-        Err(mut err) => {
-            err.set_status(StatusCode::BadRequest);
-            Err(err)
-        }
+        Err(_) => Ok(StatusCode::NotFound.into()),
+    }
+}
+
+async fn echo_wildcard(req: Request<()>) -> tide::Result<tide::Response> {
+    match req.wildcard() {
+        Some(path) => Ok(path.into()),
+        None => Ok(StatusCode::NotFound.into()),
     }
 }
 
 #[async_std::test]
-async fn wildcard() -> tide::Result<()> {
+async fn param() -> tide::Result<()> {
     let mut app = tide::Server::new();
     app.at("/add_one/:num").get(add_one);
     assert_eq!(app.get("/add_one/3").recv_string().await?, "4");
@@ -61,20 +65,21 @@ async fn not_found_error() -> tide::Result<()> {
 }
 
 #[async_std::test]
-async fn wild_path() -> tide::Result<()> {
+async fn wildcard() -> tide::Result<()> {
     let mut app = tide::new();
-    app.at("/echo/*path").get(echo_path);
+    app.at("/echo/*").get(echo_wildcard);
     assert_eq!(app.get("/echo/some_path").recv_string().await?, "some_path");
     assert_eq!(
         app.get("/echo/multi/segment/path").recv_string().await?,
         "multi/segment/path"
     );
-    assert_eq!(app.get("/echo/").await?.status(), StatusCode::NotFound);
+    assert_eq!(app.get("/echo/").await?.status(), StatusCode::Ok);
+    assert_eq!(app.get("/echo").await?.status(), StatusCode::Ok);
     Ok(())
 }
 
 #[async_std::test]
-async fn multi_wildcard() -> tide::Result<()> {
+async fn multi_param() -> tide::Result<()> {
     let mut app = tide::new();
     app.at("/add_two/:one/:two/").get(add_two);
     assert_eq!(app.get("/add_two/1/2/").recv_string().await?, "3");
@@ -84,58 +89,14 @@ async fn multi_wildcard() -> tide::Result<()> {
 }
 
 #[async_std::test]
-async fn wild_last_segment() -> tide::Result<()> {
+async fn wildcard_last_segment() -> tide::Result<()> {
     let mut app = tide::new();
-    app.at("/echo/:path/*").get(echo_path);
+    app.at("/echo/:param/*").get(echo_param);
     assert_eq!(app.get("/echo/one/two").recv_string().await?, "one");
     assert_eq!(
         app.get("/echo/one/two/three/four").recv_string().await?,
         "one"
     );
-    Ok(())
-}
-
-#[async_std::test]
-async fn invalid_wildcard() -> tide::Result<()> {
-    let mut app = tide::new();
-    app.at("/echo/*path/:one/").get(echo_path);
-    assert_eq!(
-        app.get("/echo/one/two").await?.status(),
-        StatusCode::NotFound
-    );
-    Ok(())
-}
-
-#[async_std::test]
-async fn nameless_wildcard() -> tide::Result<()> {
-    let mut app = tide::Server::new();
-    app.at("/echo/:").get(|_| async { Ok("") });
-    assert_eq!(
-        app.get("/echo/one/two").await?.status(),
-        StatusCode::NotFound
-    );
-    assert_eq!(app.get("/echo/one").await?.status(), StatusCode::Ok);
-    Ok(())
-}
-
-#[async_std::test]
-async fn nameless_internal_wildcard() -> tide::Result<()> {
-    let mut app = tide::new();
-    app.at("/echo/:/:path").get(echo_path);
-    assert_eq!(app.get("/echo/one").await?.status(), StatusCode::NotFound);
-    assert_eq!(app.get("/echo/one/two").recv_string().await?, "two");
-    Ok(())
-}
-
-#[async_std::test]
-async fn nameless_internal_wildcard2() -> tide::Result<()> {
-    let mut app = tide::new();
-    app.at("/echo/:/:path").get(|req: Request<()>| async move {
-        assert_eq!(req.param("path")?, "two");
-        Ok("")
-    });
-
-    assert!(app.get("/echo/one/two").await?.status().is_success());
     Ok(())
 }
 
