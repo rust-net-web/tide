@@ -54,6 +54,7 @@ pub struct SessionMiddleware<Store> {
     cookie_domain: Option<String>,
     session_ttl: Option<Duration>,
     save_unchanged: bool,
+    secure: Option<bool>,
     same_site_policy: SameSite,
     key: Key,
 }
@@ -66,6 +67,7 @@ impl<Store: SessionStore> std::fmt::Debug for SessionMiddleware<Store> {
             .field("cookie_name", &self.cookie_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("session_ttl", &self.session_ttl)
+            .field("secure", &self.secure)
             .field("same_site_policy", &self.same_site_policy)
             .field("key", &"..")
             .field("save_unchanged", &self.save_unchanged)
@@ -91,7 +93,10 @@ where
             session.expire_in(ttl);
         }
 
-        let secure_cookie = request.url().scheme() == "https";
+        let mut secure_cookie = request.url().scheme() == "https";
+        if let Some(secure) = self.secure {
+            secure_cookie = secure;
+        }
         request.set_ext(session.clone());
 
         let mut response = next.run(request).await;
@@ -140,6 +145,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
     /// * cookie path: "/"
     /// * cookie name: "tide.sid"
     /// * session ttl: one day
+    /// * secure: request.scheme == 'https'
     /// * same site: strict
     /// * save unchanged: enabled
     ///
@@ -160,6 +166,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
     ///         .with_cookie_name("custom.cookie.name")
     ///         .with_cookie_path("/some/path")
     ///         .with_cookie_domain("www.rust-lang.org")
+    ///         .with_secure(true)
     ///         .with_same_site_policy(SameSite::Lax)
     ///         .with_session_ttl(Some(Duration::from_secs(1)))
     ///         .without_save_unchanged(),
@@ -172,6 +179,7 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
             cookie_path: "/".into(),
             cookie_name: "tide.sid".into(),
             cookie_domain: None,
+            secure: None,
             same_site_policy: SameSite::Strict,
             session_ttl: Some(Duration::from_secs(24 * 60 * 60)),
             key: Key::derive_from(secret),
@@ -214,6 +222,14 @@ impl<Store: SessionStore> SessionMiddleware<Store> {
     /// `save_unchanged` is enabled.
     pub fn without_save_unchanged(mut self) -> Self {
         self.save_unchanged = false;
+        self
+    }
+
+    /// Sets the secure attribute of the cookie.
+    /// Defaults to true if the incoming request scheme is 'https'
+    /// Can optionally be set to true or false to override
+    pub fn with_secure(mut self, secure: bool) -> Self {
+        self.secure = Some(secure);
         self
     }
 
