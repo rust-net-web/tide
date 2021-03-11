@@ -64,6 +64,7 @@ async fn test_customized_sessions() -> tide::Result<()> {
             .with_cookie_name("custom.cookie.name")
             .with_cookie_path("/nested")
             .with_cookie_domain("www.rust-lang.org")
+            .with_secure(true)
             .with_same_site_policy(SameSite::Lax)
             .with_session_ttl(Some(Duration::from_secs(1)))
             .without_save_unchanged(),
@@ -99,6 +100,7 @@ async fn test_customized_sessions() -> tide::Result<()> {
     assert!(cookies.get("tide.sid").is_none());
     let cookie = &cookies["custom.cookie.name"];
     assert_eq!(cookie.http_only(), Some(true));
+    assert_eq!(cookie.secure(), Some(true));
     assert_eq!(cookie.same_site(), Some(SameSite::Lax));
     assert_eq!(cookie.path(), Some("/nested"));
     assert_eq!(cookie.domain(), Some("www.rust-lang.org"));
