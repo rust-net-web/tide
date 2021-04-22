@@ -1,9 +1,8 @@
 use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
-use route_recognizer::Params;
 
-use std::ops::Index;
 use std::pin::Pin;
+use std::{collections::BTreeMap, ops::Index};
 
 #[cfg(feature = "cookies")]
 use crate::cookies::CookieData;
@@ -27,13 +26,17 @@ pin_project_lite::pin_project! {
         pub(crate) state: State,
         #[pin]
         pub(crate) req: http::Request,
-        pub(crate) route_params: Vec<Params>,
+        pub(crate) route_params: Vec<BTreeMap<String, String>>,
     }
 }
 
 impl<State> Request<State> {
     /// Create a new `Request`.
-    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Params>) -> Self {
+    pub(crate) fn new(
+        state: State,
+        req: http_types::Request,
+        route_params: Vec<BTreeMap<String, String>>,
+    ) -> Self {
         Self {
             state,
             req,
@@ -297,7 +300,7 @@ impl<State> Request<State> {
         self.route_params
             .iter()
             .rev()
-            .find_map(|params| params.find(key))
+            .find_map(|params| params.get(key).map(|s| s.as_str()))
             .ok_or_else(|| format_err!("Param \"{}\" not found", key.to_string()))
     }
 
@@ -580,7 +583,7 @@ impl<State> Into<http::Request> for Request<State> {
 #[allow(clippy::from_over_into)]
 impl<State: Default> Into<Request<State>> for http_types::Request {
     fn into(self) -> Request<State> {
-        Request::new(State::default(), self, Vec::<Params>::new())
+        Request::new(State::default(), self, Vec::new())
     }
 }
 
@@ -652,8 +655,8 @@ impl<State> Index<&str> for Request<State> {
     }
 }
 
-pub(crate) fn rest(route_params: &[Params]) -> Option<&str> {
+pub(crate) fn rest(route_params: &[BTreeMap<String, String>]) -> Option<&str> {
     route_params
         .last()
-        .and_then(|params| params.find("--tide-path-rest"))
+        .and_then(|params| params.get("--tide-path-rest").map(|s| s.as_str()))
 }

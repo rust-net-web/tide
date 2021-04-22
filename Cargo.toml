@@ -44,6 +44,7 @@ http-client = { version = "6.1.0", default-features = false }
 http-types = { version = "2.10.0", default-features = false, features = ["fs"] }
 kv-log-macro = "1.0.7"
 log = { version = "0.4.13", features = ["kv_unstable_std"] }
+percent-encoding = "2.1.0"
 pin-project-lite = "0.2.0"
 route-recognizer = "0.2.0"
 serde = "1.0.117"

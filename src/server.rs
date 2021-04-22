@@ -1,7 +1,12 @@
 //! An HTTP server
 
+use std::collections::BTreeMap;
+
 use async_std::io;
 use async_std::sync::Arc;
+use http_types::StatusCode;
+use percent_encoding::percent_decode_str;
+use route_recognizer::Params;
 
 #[cfg(feature = "cookies")]
 use crate::cookies;
@@ -290,7 +295,7 @@ where
 
         let method = req.method().to_owned();
         let Selection { endpoint, params } = router.route(&req.url().path(), method);
-        let route_params = vec![params];
+        let route_params = vec![decode_params(&params)?];
         let req = Request::new(state, req, route_params);
 
         let next = Next {
@@ -335,6 +340,22 @@ impl<State: Clone> Clone for Server<State> {
     }
 }
 
+/// Decode all parameters from params and add the decoded parameters to a map
+fn decode_params(params: &Params) -> http_types::Result<BTreeMap<String, String>> {
+    let mut map = BTreeMap::new();
+    for (param, value) in params.into_iter() {
+        map.insert(
+            param.to_string(),
+            percent_decode_str(value)
+                .decode_utf8()
+                .map_err(|err| http_types::Error::new(StatusCode::BadRequest, err))?
+                .into(),
+        );
+    }
+
+    Ok(map)
+}
+
 #[async_trait::async_trait]
 impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'static>
     Endpoint<State> for Server<InnerState>
@@ -352,7 +373,7 @@ impl<State: Clone + Sync + Send + 'static, InnerState: Clone + Sync + Send + 'st
         let state = self.state.clone();
 
         let Selection { endpoint, params } = router.route(&path, method);
-        route_params.push(params);
+        route_params.push(decode_params(&params)?);
         let req = Request::new(state, req, route_params);
 
         let next = Next {
