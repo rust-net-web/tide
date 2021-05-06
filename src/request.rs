@@ -1,6 +1,6 @@
 use async_std::io::{self, prelude::*};
 use async_std::task::{Context, Poll};
-use route_recognizer::Params;
+use routefinder::Captures;
 
 use std::ops::Index;
 use std::pin::Pin;
@@ -27,13 +27,13 @@ pin_project_lite::pin_project! {
         pub(crate) state: State,
         #[pin]
         pub(crate) req: http::Request,
-        pub(crate) route_params: Vec<Params>,
+        pub(crate) route_params: Vec<Captures>,
     }
 }
 
 impl<State> Request<State> {
     /// Create a new `Request`.
-    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Params>) -> Self {
+    pub(crate) fn new(state: State, req: http_types::Request, route_params: Vec<Captures>) -> Self {
         Self {
             state,
             req,
@@ -266,8 +266,7 @@ impl<State> Request<State> {
     ///
     /// Returns the parameter as a `&str`, borrowed from this `Request`.
     ///
-    /// The name should *not* include the leading `:` or the trailing `*` (if
-    /// any).
+    /// The name should *not* include the leading `:`.
     ///
     /// # Errors
     ///
@@ -297,8 +296,38 @@ impl<State> Request<State> {
         self.route_params
             .iter()
             .rev()
-            .find_map(|params| params.find(key))
+            .find_map(|captures| captures.get(key))
             .ok_or_else(|| format_err!("Param \"{}\" not found", key.to_string()))
+    }
+
+    /// Fetch the wildcard from the route, if it exists
+    ///
+    /// Returns the parameter as a `&str`, borrowed from this `Request`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use async_std::task::block_on;
+    /// # fn main() -> Result<(), std::io::Error> { block_on(async {
+    /// #
+    /// use tide::{Request, Result};
+    ///
+    /// async fn greet(req: Request<()>) -> Result<String> {
+    ///     let name = req.wildcard().unwrap_or("world");
+    ///     Ok(format!("Hello, {}!", name))
+    /// }
+    ///
+    /// let mut app = tide::new();
+    /// app.at("/hello/*").get(greet);
+    /// app.listen("127.0.0.1:8080").await?;
+    /// #
+    /// # Ok(()) })}
+    /// ```
+    pub fn wildcard(&self) -> Option<&str> {
+        self.route_params
+            .iter()
+            .rev()
+            .find_map(|captures| captures.wildcard())
     }
 
     /// Parse the URL query component into a struct, using [serde_qs](https://docs.rs/serde_qs). To
@@ -565,7 +594,7 @@ impl<State> From<Request<State>> for http::Request {
 
 impl<State: Default> From<http_types::Request> for Request<State> {
     fn from(request: http_types::Request) -> Request<State> {
-        Request::new(State::default(), request, Vec::<Params>::new())
+        Request::new(State::default(), request, vec![])
     }
 }
 
@@ -634,10 +663,4 @@ impl<State> Index<&str> for Request<State> {
     fn index(&self, name: &str) -> &HeaderValues {
         &self.req[name]
     }
-}
-
-pub(crate) fn rest(route_params: &[Params]) -> Option<&str> {
-    route_params
-        .last()
-        .and_then(|params| params.find("--tide-path-rest"))
 }

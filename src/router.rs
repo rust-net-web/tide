@@ -1,4 +1,4 @@
-use route_recognizer::{Match, Params, Router as MethodRouter};
+use routefinder::{Captures, Router as MethodRouter};
 use std::collections::HashMap;
 
 use crate::endpoint::DynEndpoint;
@@ -14,11 +14,19 @@ pub(crate) struct Router<State> {
     all_method_router: MethodRouter<Box<DynEndpoint<State>>>,
 }
 
+impl<State> std::fmt::Debug for Router<State> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Router")
+            .field("method_map", &self.method_map)
+            .field("all_method_router", &self.all_method_router)
+            .finish()
+    }
+}
+
 /// The result of routing a URL
-#[allow(missing_debug_implementations)]
 pub(crate) struct Selection<'a, State> {
     pub(crate) endpoint: &'a DynEndpoint<State>,
-    pub(crate) params: Params,
+    pub(crate) params: Captures,
 }
 
 impl<State: Clone + Send + Sync + 'static> Router<State> {
@@ -39,26 +47,27 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
             .entry(method)
             .or_insert_with(MethodRouter::new)
             .add(path, ep)
+            .unwrap()
     }
 
     pub(crate) fn add_all(&mut self, path: &str, ep: Box<DynEndpoint<State>>) {
-        self.all_method_router.add(path, ep)
+        self.all_method_router.add(path, ep).unwrap()
     }
 
     pub(crate) fn route(&self, path: &str, method: http_types::Method) -> Selection<'_, State> {
-        if let Some(Match { handler, params }) = self
+        if let Some(m) = self
             .method_map
             .get(&method)
-            .and_then(|r| r.recognize(path).ok())
+            .and_then(|r| r.best_match(path))
         {
             Selection {
-                endpoint: &**handler,
-                params,
+                endpoint: m.handler(),
+                params: m.captures(),
             }
-        } else if let Ok(Match { handler, params }) = self.all_method_router.recognize(path) {
+        } else if let Some(m) = self.all_method_router.best_match(path) {
             Selection {
-                endpoint: &**handler,
-                params,
+                endpoint: m.handler(),
+                params: m.captures(),
             }
         } else if method == http_types::Method::Head {
             // If it is a HTTP HEAD request then check if there is a callback in the endpoints map
@@ -69,18 +78,18 @@ impl<State: Clone + Send + Sync + 'static> Router<State> {
             .method_map
             .iter()
             .filter(|(k, _)| **k != method)
-            .any(|(_, r)| r.recognize(path).is_ok())
+            .any(|(_, r)| r.best_match(path).is_some())
         {
             // If this `path` can be handled by a callback registered with a different HTTP method
             // should return 405 Method Not Allowed
             Selection {
                 endpoint: &method_not_allowed,
-                params: Params::new(),
+                params: Captures::default(),
             }
         } else {
             Selection {
                 endpoint: &not_found_endpoint,
-                params: Params::new(),
+                params: Captures::default(),
             }
         }
     }
