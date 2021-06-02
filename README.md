@@ -64,8 +64,7 @@ Create an HTTP server that receives a JSON body, validates it, and responds
 with a confirmation message.
 
 ```rust
-use tide::Request;
-use tide::prelude::*;
+use tide::{prelude::*, utils::After, Request, Response};
 
 #[derive(Debug, Deserialize)]
 struct Animal {
@@ -75,7 +74,9 @@ struct Animal {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    tide::log::start();
     let mut app = tide::new();
+    app.with(After(err_handler));
     app.at("/orders/shoes").post(order_shoes);
     app.listen("127.0.0.1:8080").await?;
     Ok(())
@@ -85,6 +86,15 @@ async fn order_shoes(mut req: Request<()>) -> tide::Result {
     let Animal { name, legs } = req.body_json().await?;
     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 }
+
+async fn err_handler(res: Response) -> tide::Result {
+    if let Some(e) = res.error() {
+        let mut r = Response::new(e.status());
+        r.body_string(format!("Error: {:?}", e));
+        return Ok(r);
+    }
+    Ok(res)
+}
 ```
 
 ```sh
@@ -92,7 +102,7 @@ $ curl localhost:8080/orders/shoes -d '{ "name": "Chashu", "legs": 4 }'
 Hello, Chashu! I've put in an order for 4 shoes
 
 $ curl localhost:8080/orders/shoes -d '{ "name": "Mary Millipede", "legs": 750 }'
-number too large to fit in target type
+Error: invalid value: integer `750`, expected u8 at line 1 column 39
 ```
 
 See more examples in the [examples](https://github.com/http-rs/tide/tree/main/examples) directory.
