@@ -38,6 +38,7 @@ async-session = { version = "3.0", optional = true }
 async-sse = "4.0.1"
 async-std = { version = "1.6.5", features = ["unstable"] }
 async-trait = "0.1.41"
+event-listener = "2.5.1"
 femme = { version = "2.1.1", optional = true }
 futures-util = "0.3.6"
 http-client = { version = "6.1.0", default-features = false }
