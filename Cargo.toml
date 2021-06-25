@@ -51,6 +51,7 @@ route-recognizer = "0.2.0"
 serde = "1.0.117"
 serde_json = "1.0.59"
 stopper = "0.2.0"
+waitgroup = "0.1.2"
 
 [dev-dependencies]
 async-std = { version = "1.6.5", features = ["unstable", "attributes"] }

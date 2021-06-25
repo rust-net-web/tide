@@ -10,7 +10,8 @@ use async_std::prelude::*;
 use async_std::{io, task};
 
 use futures_util::future::Either;
-use futures_util::stream::FuturesUnordered;
+
+use waitgroup::{WaitGroup, Worker};
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
@@ -25,7 +26,6 @@ pub struct TcpListener<State> {
     listener: Option<net::TcpListener>,
     server: Option<Server<State>>,
     info: Option<ListenInfo>,
-    join_handles: Vec<task::JoinHandle<()>>,
 }
 
 impl<State> TcpListener<State> {
@@ -35,7 +35,6 @@ impl<State> TcpListener<State> {
             listener: None,
             server: None,
             info: None,
-            join_handles: Vec::new(),
         }
     }
 
@@ -45,7 +44,6 @@ impl<State> TcpListener<State> {
             listener: Some(tcp_listener.into()),
             server: None,
             info: None,
-            join_handles: Vec::new(),
         }
     }
 }
@@ -53,8 +51,11 @@ impl<State> TcpListener<State> {
 fn handle_tcp<State: Clone + Send + Sync + 'static>(
     app: Server<State>,
     stream: TcpStream,
-) -> task::JoinHandle<()> {
+    wait_group_worker: Worker,
+) {
     task::spawn(async move {
+        let _wait_group_worker = wait_group_worker;
+
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
 
@@ -75,7 +76,7 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(
         if let Err(error) = fut.await {
             log::error!("async-h1 error", { error: error.to_string() });
         }
-    })
+    });
 }
 
 #[async_trait::async_trait]
@@ -121,6 +122,7 @@ where
         } else {
             Either::Right(incoming)
         };
+        let wait_group = WaitGroup::new();
 
         while let Some(stream) = incoming.next().await {
             match stream {
@@ -133,18 +135,12 @@ where
                 }
 
                 Ok(stream) => {
-                    let handle = handle_tcp(server.clone(), stream);
-                    self.join_handles.push(handle);
+                    handle_tcp(server.clone(), stream, wait_group.worker());
                 }
             };
         }
 
-        let join_handles = std::mem::take(&mut self.join_handles);
-        join_handles
-            .into_iter()
-            .collect::<FuturesUnordered<task::JoinHandle<()>>>()
-            .collect::<()>()
-            .await;
+        wait_group.wait().await;
 
         Ok(())
     }
