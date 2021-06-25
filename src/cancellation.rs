@@ -1,3 +1,5 @@
+//! Future and Stream cancellation
+
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -9,6 +11,7 @@ use async_std::task::{Context, Poll};
 use event_listener::{Event, EventListener};
 use pin_project_lite::pin_project;
 
+/// StopSource produces [StopToken] and cancels all of its tokens on drop.
 #[derive(Debug)]
 pub struct StopSource {
     stopped: Arc<AtomicBool>,
@@ -16,6 +19,7 @@ pub struct StopSource {
 }
 
 impl StopSource {
+    /// Create a new StopSource
     pub fn new() -> Self {
         Self {
             stopped: Arc::new(AtomicBool::new(false)),
@@ -23,6 +27,9 @@ impl StopSource {
         }
     }
 
+    /// Produce a new [StopToken], associated with this source.
+    ///
+    /// Once this source is dropped, all associated [StopToken] futures will complete.
     pub fn token(&self) -> StopToken {
         StopToken {
             stopped: self.stopped.clone(),
@@ -40,6 +47,7 @@ impl Drop for StopSource {
 }
 
 pin_project! {
+    /// StopToken is a future which completes when the associated [StopSource] is dropped.
     #[derive(Debug)]
     pub struct StopToken {
         #[pin]
@@ -51,6 +59,7 @@ pin_project! {
 }
 
 impl StopToken {
+    /// Produce a StopToken that associates with no [StopSource], and never completes.
     pub fn never() -> Self {
         let event = Event::new();
         Self {
@@ -86,6 +95,9 @@ impl Future for StopToken {
 }
 
 pin_project! {
+    /// A stream that early exits when inner [StopToken] completes.
+    ///
+    /// Users usually do not need to construct this type manually, but rather use the [StopStreamExt::stop_on] method instead.
     #[derive(Debug)]
     pub struct StopStream<S> {
         #[pin]
@@ -96,6 +108,7 @@ pin_project! {
 }
 
 impl<S> StopStream<S> {
+    /// Wraps a stream to exit early when `stop_token` completes.
     pub fn new(stream: S, stop_token: StopToken) -> Self {
         Self { stream, stop_token }
     }
@@ -117,7 +130,9 @@ where
     }
 }
 
+/// Stream extensions to generate [StopStream] that exits early when `stop_token` completes.
 pub trait StopStreamExt: Sized {
+    /// Wraps a stream to exit early when `stop_token` completes.
     fn stop_on(self, stop_token: StopToken) -> StopStream<Self> {
         StopStream::new(self, stop_token)
     }
@@ -126,6 +141,9 @@ pub trait StopStreamExt: Sized {
 impl<S> StopStreamExt for S where S: Stream {}
 
 pin_project! {
+    /// A future that early exits when inner [StopToken] completes.
+    ///
+    /// Users usually do not need to construct this type manually, but rather use the [StopFutureExt::stop_on] method instead.
     #[derive(Debug)]
     pub struct StopFuture<F> {
         #[pin]
@@ -136,6 +154,7 @@ pin_project! {
 }
 
 impl<F> StopFuture<F> {
+    /// Wraps a future to exit early when `stop_token` completes.
     pub fn new(future: F, stop_token: StopToken) -> Self {
         Self { future, stop_token }
     }
@@ -160,7 +179,9 @@ where
     }
 }
 
+/// Future extensions to generate [StopFuture] that exits early when `stop_token` completes.
 pub trait StopFutureExt: Sized {
+    /// Wraps a future to exit early when `stop_token` completes.
     fn stop_on(self, stop_token: StopToken) -> StopFuture<Self> {
         StopFuture::new(self, stop_token)
     }
