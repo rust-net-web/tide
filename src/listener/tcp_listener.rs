@@ -1,5 +1,6 @@
 use super::{is_transient_error, ListenInfo};
 
+use crate::cancellation::StopStreamExt;
 use crate::listener::Listener;
 use crate::{log, Server};
 
@@ -98,7 +99,7 @@ where
             .take()
             .expect("`Listener::bind` must be called before `Listener::accept`");
 
-        let mut incoming = listener.incoming();
+        let mut incoming = listener.incoming().stop_on(server.stop_token.clone());
 
         while let Some(stream) = incoming.next().await {
             match stream {
