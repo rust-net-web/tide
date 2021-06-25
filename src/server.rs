@@ -3,6 +3,7 @@
 use async_std::io;
 use async_std::sync::Arc;
 
+use crate::cancellation::StopToken;
 #[cfg(feature = "cookies")]
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
@@ -38,6 +39,7 @@ pub struct Server<State> {
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
+    pub(crate) stop_token: StopToken,
 }
 
 impl Server<()> {
@@ -113,6 +115,7 @@ where
                 Arc::new(log::LogMiddleware::new()),
             ]),
             state,
+            stop_token: StopToken::never(),
         }
     }
 
@@ -286,6 +289,7 @@ where
             router,
             state,
             middleware,
+            stop_token: _,
         } = self.clone();
 
         let method = req.method().to_owned();
@@ -317,6 +321,11 @@ where
     pub fn state(&self) -> &State {
         &self.state
     }
+
+    pub fn stop_on(&mut self, stop_token: StopToken) -> &mut Self {
+        self.stop_token = stop_token;
+        self
+    }
 }
 
 impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
@@ -331,6 +340,7 @@ impl<State: Clone> Clone for Server<State> {
             router: self.router.clone(),
             state: self.state.clone(),
             middleware: self.middleware.clone(),
+            stop_token: self.stop_token.clone(),
         }
     }
 }
