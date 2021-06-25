@@ -322,6 +322,24 @@ where
         &self.state
     }
 
+    /// Stops the server when given `stop_token` completes.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use tide::cancellation::StopSource;
+    ///
+    /// let mut app = tide::new();
+    ///
+    /// let stop_source = StopSource::new();
+    ///
+    /// app.stop_on(stop_source.token());
+    ///
+    /// // Runs server...
+    ///
+    /// // When something happens
+    /// drop(stop_source);
+    /// ```
     pub fn stop_on(&mut self, stop_token: StopToken) -> &mut Self {
         self.stop_token = stop_token;
         self
