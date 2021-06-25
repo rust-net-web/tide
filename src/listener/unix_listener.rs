@@ -11,6 +11,7 @@ use async_std::prelude::*;
 use async_std::{io, task};
 
 use futures_util::future::Either;
+use futures_util::stream::FuturesUnordered;
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
@@ -25,6 +26,7 @@ pub struct UnixListener<State> {
     listener: Option<net::UnixListener>,
     server: Option<Server<State>>,
     info: Option<ListenInfo>,
+    join_handles: Vec<task::JoinHandle<()>>,
 }
 
 impl<State> UnixListener<State> {
@@ -34,6 +36,7 @@ impl<State> UnixListener<State> {
             listener: None,
             server: None,
             info: None,
+            join_handles: Vec::new(),
         }
     }
 
@@ -43,11 +46,15 @@ impl<State> UnixListener<State> {
             listener: Some(unix_listener.into()),
             server: None,
             info: None,
+            join_handles: Vec::new(),
         }
     }
 }
 
-fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: UnixStream) {
+fn handle_unix<State: Clone + Send + Sync + 'static>(
+    app: Server<State>,
+    stream: UnixStream,
+) -> task::JoinHandle<()> {
     task::spawn(async move {
         let local_addr = unix_socket_addr_to_string(stream.local_addr());
         let peer_addr = unix_socket_addr_to_string(stream.peer_addr());
@@ -61,7 +68,7 @@ fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream:
         if let Err(error) = fut.await {
             log::error!("async-h1 error", { error: error.to_string() });
         }
-    });
+    })
 }
 
 #[async_trait::async_trait]
@@ -116,10 +123,19 @@ where
                 }
 
                 Ok(stream) => {
-                    handle_unix(server.clone(), stream);
+                    let handle = handle_unix(server.clone(), stream);
+                    self.join_handles.push(handle);
                 }
             };
         }
+
+        let join_handles = std::mem::take(&mut self.join_handles);
+        join_handles
+            .into_iter()
+            .collect::<FuturesUnordered<task::JoinHandle<()>>>()
+            .collect::<()>()
+            .await;
+
         Ok(())
     }
 
