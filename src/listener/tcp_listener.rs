@@ -9,6 +9,8 @@ use async_std::net::{self, SocketAddr, TcpStream};
 use async_std::prelude::*;
 use async_std::{io, task};
 
+use futures_util::future::Either;
+
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
 /// enum in order to allow creation of a tide::listener::TcpListener
@@ -98,7 +100,12 @@ where
             .take()
             .expect("`Listener::bind` must be called before `Listener::accept`");
 
-        let mut incoming = server.stopper.clone().stop_stream(listener.incoming());
+        let incoming = listener.incoming();
+        let mut incoming = if let Some(stopper) = server.stopper.clone() {
+            Either::Left(stopper.stop_stream(incoming))
+        } else {
+            Either::Right(incoming)
+        };
 
         while let Some(stream) = incoming.next().await {
             match stream {

@@ -40,7 +40,7 @@ pub struct Server<State> {
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
-    pub(crate) stopper: Stopper,
+    pub(crate) stopper: Option<Stopper>,
 }
 
 impl Server<()> {
@@ -116,7 +116,7 @@ where
                 Arc::new(log::LogMiddleware::new()),
             ]),
             state,
-            stopper: Stopper::new(),
+            stopper: None,
         }
     }
 
@@ -342,7 +342,7 @@ where
     /// stopper.stop();
     /// ```
     pub fn with_stopper(&mut self, stopper: Stopper) -> &mut Self {
-        self.stopper = stopper;
+        self.stopper = Some(stopper);
         self
     }
 }
