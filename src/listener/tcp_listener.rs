@@ -58,11 +58,19 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
 
-        let fut = async_h1::accept(stream, |mut req| async {
-            req.set_local_addr(local_addr);
-            req.set_peer_addr(peer_addr);
-            app.respond(req).await
-        });
+        let opts = async_h1::ServerOptions {
+            stopper: app.stopper.clone(),
+            ..Default::default()
+        };
+        let fut = async_h1::accept_with_opts(
+            stream,
+            |mut req| async {
+                req.set_local_addr(local_addr);
+                req.set_peer_addr(peer_addr);
+                app.respond(req).await
+            },
+            opts,
+        );
 
         if let Err(error) = fut.await {
             log::error!("async-h1 error", { error: error.to_string() });
