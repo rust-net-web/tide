@@ -39,6 +39,12 @@ impl StopSource {
     }
 }
 
+impl Default for StopSource {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Drop for StopSource {
     fn drop(&mut self) {
         self.stopped.store(true, Ordering::SeqCst);
