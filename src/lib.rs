@@ -76,7 +76,6 @@ mod route;
 mod router;
 mod server;
 
-pub mod cancellation;
 pub mod convert;
 pub mod listener;
 pub mod log;
@@ -98,6 +97,8 @@ pub use route::Route;
 pub use server::Server;
 
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
+
+pub use stopper;
 
 /// Create a new Tide server.
 ///

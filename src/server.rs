@@ -3,7 +3,8 @@
 use async_std::io;
 use async_std::sync::Arc;
 
-use crate::cancellation::StopToken;
+use stopper::Stopper;
+
 #[cfg(feature = "cookies")]
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
@@ -39,7 +40,7 @@ pub struct Server<State> {
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
-    pub(crate) stop_token: StopToken,
+    pub(crate) stopper: Stopper,
 }
 
 impl Server<()> {
@@ -115,7 +116,7 @@ where
                 Arc::new(log::LogMiddleware::new()),
             ]),
             state,
-            stop_token: StopToken::never(),
+            stopper: Stopper::new(),
         }
     }
 
@@ -289,7 +290,7 @@ where
             router,
             state,
             middleware,
-            stop_token: _,
+            stopper: _,
         } = self.clone();
 
         let method = req.method().to_owned();
@@ -322,26 +323,26 @@ where
         &self.state
     }
 
-    /// Stops the server when given `stop_token` completes.
+    /// Stops the server when given `stopper` stops.
     ///
     /// # Example
     ///
     /// ```rust
-    /// use tide::cancellation::StopSource;
+    /// use tide::stopper::Stopper;
     ///
     /// let mut app = tide::new();
     ///
-    /// let stop_source = StopSource::new();
+    /// let stopper = Stopper::new();
     ///
-    /// app.stop_on(stop_source.token());
+    /// app.with_stopper(stopper.clone());
     ///
     /// // Runs server...
     ///
     /// // When something happens
-    /// drop(stop_source);
+    /// stopper.stop();
     /// ```
-    pub fn stop_on(&mut self, stop_token: StopToken) -> &mut Self {
-        self.stop_token = stop_token;
+    pub fn with_stopper(&mut self, stopper: Stopper) -> &mut Self {
+        self.stopper = stopper;
         self
     }
 }
@@ -358,7 +359,7 @@ impl<State: Clone> Clone for Server<State> {
             router: self.router.clone(),
             state: self.state.clone(),
             middleware: self.middleware.clone(),
-            stop_token: self.stop_token.clone(),
+            stopper: self.stopper.clone(),
         }
     }
 }
