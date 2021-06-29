@@ -34,9 +34,10 @@ where
                 }
             }
 
-            "tcp" | "http" => Ok(ParsedListener::Tcp(TcpListener::from_addrs(
-                self.socket_addrs(|| Some(80))?,
-            ))),
+            "tcp" | "http" => Ok(ParsedListener::Tcp(
+                TcpListener::from_addrs(self.socket_addrs(|| None)?.as_slice())
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?,
+            )),
 
             "tls" | "ssl" | "https" => Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -79,9 +80,10 @@ where
 
     fn to_listener(self) -> io::Result<Self::Listener> {
         if let Ok(socket_addrs) = self.to_socket_addrs() {
-            Ok(ParsedListener::Tcp(TcpListener::from_addrs(
-                socket_addrs.collect(),
-            )))
+            Ok(ParsedListener::Tcp(
+                TcpListener::from_addrs(socket_addrs.collect::<Vec<_>>().as_slice())
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?,
+            ))
         } else if let Ok(url) = Url::parse(self) {
             ToListener::<State>::to_listener(url)
         } else {
@@ -162,7 +164,8 @@ where
     type Listener = TcpListener<State>;
 
     fn to_listener(self) -> io::Result<Self::Listener> {
-        Ok(TcpListener::from_addrs(self.to_socket_addrs()?.collect()))
+        TcpListener::from_addrs(self)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
     }
 }
 
@@ -245,7 +248,8 @@ where
 {
     type Listener = TcpListener<State>;
     fn to_listener(self) -> io::Result<Self::Listener> {
-        Ok(TcpListener::from_addrs(vec![self]))
+        TcpListener::from_addrs(self)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
     }
 }
 

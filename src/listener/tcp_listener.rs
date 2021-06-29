@@ -4,10 +4,14 @@ use crate::listener::Listener;
 use crate::{log, Server};
 
 use std::fmt::{self, Display, Formatter};
+use std::str::FromStr;
+
+use std::net::ToSocketAddrs;
 
 use async_std::net::{self, SocketAddr, TcpStream};
 use async_std::prelude::*;
 use async_std::{io, task};
+use http_types::Url;
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
@@ -15,32 +19,80 @@ use async_std::{io, task};
 /// from a SocketAddr spec that has not yet been bound OR from a bound
 /// TcpListener.
 ///
-/// This is currently crate-visible only, and tide users are expected
-/// to create these through [ToListener](crate::ToListener) conversions.
+/// ```rust,no_run
+/// # async_std::task::block_on(async {
+/// tide::new().listen(
+///     TcpListener::new("localhost:8080")
+///         .with_nodelay(true)
+///         .with_ttl(100)
+/// ).await
+/// # });
+/// ```
 pub struct TcpListener<State> {
     addrs: Option<Vec<SocketAddr>>,
     listener: Option<net::TcpListener>,
     server: Option<Server<State>>,
     info: Option<ListenInfo>,
+    tcp_nodelay: Option<bool>,
+    tcp_ttl: Option<u32>,
 }
 
-impl<State> TcpListener<State> {
-    pub fn from_addrs(addrs: Vec<SocketAddr>) -> Self {
-        Self {
-            addrs: Some(addrs),
+impl<S> Default for TcpListener<S> {
+    fn default() -> Self {
+        TcpListener {
+            addrs: None,
             listener: None,
             server: None,
             info: None,
+            tcp_nodelay: None,
+            tcp_ttl: None,
         }
+    }
+}
+
+impl<State> TcpListener<State> {
+    pub fn new(s: &str) -> crate::Result<Self> {
+        Self::from_str(s)
+    }
+
+    pub fn from_addrs(addrs: impl std::net::ToSocketAddrs) -> crate::Result<Self> {
+        Ok(Self {
+            addrs: Some(addrs.to_socket_addrs()?.collect()),
+            ..Default::default()
+        })
     }
 
     pub fn from_listener(tcp_listener: impl Into<net::TcpListener>) -> Self {
         Self {
-            addrs: None,
             listener: Some(tcp_listener.into()),
-            server: None,
-            info: None,
+            ..Default::default()
         }
+    }
+
+    pub fn set_nodelay(&mut self, nodelay: bool) {
+        self.tcp_nodelay = Some(nodelay);
+    }
+
+    pub fn nodelay(&self) -> Option<bool> {
+        self.tcp_nodelay
+    }
+
+    pub fn with_nodelay(mut self, nodelay: bool) -> Self {
+        self.set_nodelay(nodelay);
+        self
+    }
+
+    pub fn set_ttl(&mut self, ttl: u32) {
+        self.tcp_ttl = Some(ttl);
+    }
+
+    pub fn ttl(&self) -> Option<u32> {
+        self.tcp_ttl
+    }
+
+    pub fn with_ttl(mut self, ttl: u32) -> Self {
+        self.set_ttl(ttl);
+        self
     }
 }
 
@@ -59,6 +111,25 @@ fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: 
             log::error!("async-h1 error", { error: error.to_string() });
         }
     });
+}
+
+impl<State> FromStr for TcpListener<State> {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(addrs) = s.to_socket_addrs() {
+            Self::from_addrs(addrs.collect::<Vec<_>>().as_slice())
+        } else {
+            let url = Url::parse(s)?;
+            if url.scheme() == "http" {
+                Self::from_addrs(url.socket_addrs(|| None)?.as_slice())
+            } else {
+                Err(crate::http::format_err!(
+                    "tcp listener must be used with a http scheme"
+                ))
+            }
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -111,6 +182,14 @@ where
                 }
 
                 Ok(stream) => {
+                    if let Some(nodelay) = self.tcp_nodelay {
+                        stream.set_nodelay(nodelay)?;
+                    }
+
+                    if let Some(ttl) = self.tcp_ttl {
+                        stream.set_ttl(ttl)?;
+                    }
+
                     handle_tcp(server.clone(), stream);
                 }
             };

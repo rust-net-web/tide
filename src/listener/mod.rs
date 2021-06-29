@@ -26,9 +26,9 @@ pub use to_listener::ToListener;
 #[cfg(feature = "h1-server")]
 pub(crate) use parsed_listener::ParsedListener;
 #[cfg(feature = "h1-server")]
-pub(crate) use tcp_listener::TcpListener;
+pub use tcp_listener::TcpListener;
 #[cfg(all(unix, feature = "h1-server"))]
-pub(crate) use unix_listener::UnixListener;
+pub use unix_listener::UnixListener;
 
 /// The Listener trait represents an implementation of http transport for a tide
 /// application. In order to provide a Listener to tide, you will also need to
