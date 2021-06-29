@@ -1,5 +1,4 @@
-use crate::log;
-use crate::{Middleware, Next, Request};
+use crate::{log, Middleware, Next, Request};
 
 /// Log all incoming requests and responses.
 ///
@@ -45,50 +44,65 @@ impl LogMiddleware {
             path: path,
         });
         let start = std::time::Instant::now();
+
         let response = next.run(req).await;
+
         let status = response.status();
+        let status_str = format!("{} - {}", status as u16, status.canonical_reason());
+        let duration = format!("{:?}", start.elapsed());
+
         if status.is_server_error() {
             if let Some(error) = response.error() {
+                #[cfg(debug_assertions)]
+                let message = format!("{:?}", error);
+                #[cfg(not(debug_assertions))]
+                let message = format!("{}", error);
+
                 log::error!("Internal error --> Response sent", {
-                    message: format!("{:?}", error),
+                    message: message,
                     error_type: error.type_name(),
                     method: method,
                     path: path,
-                    status: format!("{} - {}", status as u16, status.canonical_reason()),
-                    duration: format!("{:?}", start.elapsed()),
+                    status: status_str,
+                    duration: duration,
                 });
             } else {
                 log::error!("Internal error --> Response sent", {
                     method: method,
                     path: path,
-                    status: format!("{} - {}", status as u16, status.canonical_reason()),
-                    duration: format!("{:?}", start.elapsed()),
+                    status: status_str,
+                    duration: duration,
                 });
             }
         } else if status.is_client_error() {
             if let Some(error) = response.error() {
+                #[cfg(debug_assertions)]
+                let message = format!("{:?}", error);
+                #[cfg(not(debug_assertions))]
+                let message = format!("{}", error);
+
                 log::warn!("Client error --> Response sent", {
-                    message: format!("{:?}", error),
+                    message: message,
                     error_type: error.type_name(),
                     method: method,
                     path: path,
-                    status: format!("{} - {}", status as u16, status.canonical_reason()),
-                    duration: format!("{:?}", start.elapsed()),
+                    status: status_str,
+                    duration: duration,
                 });
             } else {
                 log::warn!("Client error --> Response sent", {
                     method: method,
                     path: path,
-                    status: format!("{} - {}", status as u16, status.canonical_reason()),
-                    duration: format!("{:?}", start.elapsed()),
+                    status: status_str,
+                    duration: duration,
                 });
             }
         } else {
             log::info!("--> Response sent", {
                 method: method,
                 path: path,
-                status: format!("{} - {}", status as u16, status.canonical_reason()),
-                duration: format!("{:?}", start.elapsed()),
+                status: status_str,
+                duration: duration,
             });
         }
         Ok(response)
