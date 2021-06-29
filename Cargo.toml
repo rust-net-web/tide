@@ -39,6 +39,7 @@ async-sse = "4.0.1"
 async-std = { version = "1.6.5", features = ["unstable"] }
 async-trait = "0.1.41"
 femme = { version = "2.1.1", optional = true }
+futures-lite = "1.11.2"
 futures-util = "0.3.6"
 http-client = { version = "6.1.0", default-features = false }
 http-types = { version = "2.11.0", default-features = false, features = ["fs"] }

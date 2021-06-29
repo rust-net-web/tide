@@ -1,0 +1,942 @@
+{ 
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'tide'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "tide",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'cookies'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=cookies",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "cookies",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'cookies'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=cookies",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "cookies",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'sessions'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=sessions",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "sessions",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'sessions'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=sessions",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "sessions",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'chunked'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=chunked",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "chunked",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'chunked'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=chunked",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "chunked",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'sse'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=sse",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "sse",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'sse'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=sse",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "sse",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'fib'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=fib",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "fib",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'fib'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=fib",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "fib",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'redirect'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=redirect",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "redirect",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'redirect'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=redirect",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "redirect",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'upload'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=upload",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "upload",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'upload'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=upload",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "upload",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'hello'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=hello",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "hello",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'hello'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=hello",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "hello",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'graphql'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=graphql",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "graphql",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'graphql'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=graphql",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "graphql",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'json'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=json",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "json",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'json'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=json",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "json",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'nested'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=nested",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "nested",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'nested'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=nested",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "nested",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'concurrent_listeners'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=concurrent_listeners",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "concurrent_listeners",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'concurrent_listeners'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=concurrent_listeners",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "concurrent_listeners",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'catflap'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=catflap",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "catflap",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'catflap'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=catflap",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "catflap",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'middleware'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=middleware",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "middleware",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'middleware'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=middleware",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "middleware",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'static_file'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=static_file",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "static_file",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'static_file'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=static_file",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "static_file",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'error_handling'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=error_handling",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "error_handling",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'error_handling'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=error_handling",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "error_handling",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'cookies'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=cookies",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "cookies",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'nested'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=nested",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "nested",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'sessions'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=sessions",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "sessions",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'response'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=response",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "response",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'chunked-encode-large'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=chunked-encode-large",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "chunked-encode-large",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'chunked-encode-small'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=chunked-encode-small",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "chunked-encode-small",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'unix'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=unix",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "unix",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'log'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=log",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "log",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'server'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=server",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "server",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'params'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=params",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "params",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'test_utils'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=test_utils",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "test_utils",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'route_middleware'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=route_middleware",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "route_middleware",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'function_middleware'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=function_middleware",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "function_middleware",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'endpoint'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=endpoint",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "endpoint",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'serve_dir'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=serve_dir",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "serve_dir",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'wildcard'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=wildcard",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "wildcard",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'router'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=router",
+                    "--package=tide"
+                ],
+                "filter": {
+                    "name": "router",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

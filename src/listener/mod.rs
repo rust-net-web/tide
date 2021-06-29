@@ -17,7 +17,7 @@ use std::fmt::{Debug, Display};
 use async_std::io;
 use async_trait::async_trait;
 
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 pub use concurrent_listener::ConcurrentListener;
 pub use failover_listener::FailoverListener;
@@ -46,7 +46,7 @@ where
 
     /// Start accepting incoming connections. This method must be called only
     /// after `bind` has succeeded.
-    async fn accept(&mut self) -> io::Result<()>;
+    async fn accept(&mut self, cancelation_token: CancelationToken) -> io::Result<()>;
 
     /// Expose information about the connection. This should always return valid
     /// data after `bind` has succeeded.
@@ -63,8 +63,8 @@ where
         self.as_mut().bind(app).await
     }
 
-    async fn accept(&mut self) -> io::Result<()> {
-        self.as_mut().accept().await
+    async fn accept(&mut self, cancelation_token: CancelationToken) -> io::Result<()> {
+        self.as_mut().accept(cancelation_token).await
     }
 
     fn info(&self) -> Vec<ListenInfo> {

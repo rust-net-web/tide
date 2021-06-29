@@ -9,7 +9,7 @@ use crate::listener::{Listener, ToListener};
 use crate::log;
 use crate::middleware::{Middleware, Next};
 use crate::router::{Router, Selection};
-use crate::{Endpoint, Request, Route};
+use crate::{CancelationToken, Endpoint, Request, Route};
 
 /// An HTTP server.
 ///
@@ -206,12 +206,16 @@ where
     /// # Ok(()) }) }
     /// ```
     pub async fn listen<L: ToListener<State>>(self, listener: L) -> io::Result<()> {
+        self.listen_with_cancelation_token(listener, CancelationToken::new()).await
+    }
+
+    pub async fn listen_with_cancelation_token<L: ToListener<State>>(self, listener: L, cancelation_token: CancelationToken) -> io::Result<()> {
         let mut listener = listener.to_listener()?;
         listener.bind(self).await?;
         for info in listener.info().iter() {
             log::info!("Server listening on {}", info);
         }
-        listener.accept().await?;
+        listener.accept(cancelation_token).await?;
         Ok(())
     }
 

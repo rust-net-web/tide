@@ -1,9 +1,9 @@
 use crate::listener::{ListenInfo, Listener, ToListener};
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 use std::fmt::{self, Debug, Display, Formatter};
 
-use async_std::io;
+use async_std::{io, task};
 use futures_util::stream::{futures_unordered::FuturesUnordered, StreamExt};
 
 /// ConcurrentListener allows tide to listen on any number of transports
@@ -97,12 +97,23 @@ where
         Ok(())
     }
 
-    async fn accept(&mut self) -> io::Result<()> {
+    async fn accept(&mut self, cancelation_token: CancelationToken) -> io::Result<()> {
         let mut futures_unordered = FuturesUnordered::new();
 
+        let mut cancelation_tokens = Vec::new();
+
         for listener in self.listeners.iter_mut() {
-            futures_unordered.push(listener.accept());
+            let sub_cancelation_token = CancelationToken::new();
+            futures_unordered.push(listener.accept(sub_cancelation_token.clone()));
+            cancelation_tokens.push(sub_cancelation_token);
         }
+
+        task::spawn(async move {
+            cancelation_token.return_on_cancel::<()>(()).await;
+            for sub_cancelation_token in cancelation_tokens.iter_mut() {
+                sub_cancelation_token.complete();
+            }
+        });
 
         while let Some(result) = futures_unordered.next().await {
             result?;

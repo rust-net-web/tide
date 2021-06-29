@@ -1,13 +1,15 @@
 use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
-use crate::{log, Server};
+use crate::{CancelationToken, log, Server};
 
 use std::fmt::{self, Display, Formatter};
 
 use async_std::net::{self, SocketAddr, TcpStream};
 use async_std::prelude::*;
 use async_std::{io, task};
+
+use futures_lite::future;
 
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
@@ -88,7 +90,7 @@ where
         Ok(())
     }
 
-    async fn accept(&mut self) -> io::Result<()> {
+    async fn accept(&mut self, cancelation_token: CancelationToken) -> io::Result<()> {
         let server = self
             .server
             .take()
@@ -100,7 +102,7 @@ where
 
         let mut incoming = listener.incoming();
 
-        while let Some(stream) = incoming.next().await {
+        while let Some(stream) = future::race(incoming.next(), cancelation_token.return_on_cancel(None)).await {
             match stream {
                 Err(ref e) if is_transient_error(e) => continue,
                 Err(error) => {

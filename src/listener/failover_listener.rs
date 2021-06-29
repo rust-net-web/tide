@@ -1,5 +1,5 @@
 use crate::listener::{Listener, ToListener};
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 use std::fmt::{self, Debug, Display, Formatter};
 
@@ -123,11 +123,11 @@ where
         ))
     }
 
-    async fn accept(&mut self) -> io::Result<()> {
+    async fn accept(&mut self, cancelation_token: CancelationToken) -> io::Result<()> {
         match self.index {
             Some(index) => {
                 let mut listener = self.listeners[index].take().expect("accept called twice");
-                listener.accept().await?;
+                listener.accept(cancelation_token).await?;
                 Ok(())
             }
             None => Err(io::Error::new(

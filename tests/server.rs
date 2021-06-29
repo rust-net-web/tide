@@ -4,11 +4,16 @@ use async_std::task;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tide::{Body, Request};
+use tide::{Body, CancelationToken, Request};
 
+// Note: Async tests are now supported. Refactor to avoid tast::block_on?
 #[test]
 fn hello_world() -> tide::Result<()> {
+
     task::block_on(async {
+        let cancelation_token = CancelationToken::new();
+        let server_cancelation_token = cancelation_token.clone();
+    
         let port = test_utils::find_port().await;
         let server = task::spawn(async move {
             let mut app = tide::new();
@@ -18,22 +23,20 @@ fn hello_world() -> tide::Result<()> {
                 assert!(req.peer_addr().is_some());
                 Ok("says hello")
             });
-            app.listen(("localhost", port)).await?;
+            app.listen_with_cancelation_token(("localhost", port), server_cancelation_token).await?;
             Result::<(), http_types::Error>::Ok(())
         });
 
-        let client = task::spawn(async move {
-            task::sleep(Duration::from_millis(100)).await;
-            let string = surf::get(format!("http://localhost:{}", port))
-                .body(Body::from_string("nori".to_string()))
-                .recv_string()
-                .await
-                .unwrap();
-            assert_eq!(string, "says hello");
-            Ok(())
-        });
+        task::sleep(Duration::from_millis(100)).await;
+        let string = surf::get(format!("http://localhost:{}", port))
+            .body(Body::from_string("nori".to_string()))
+            .recv_string()
+            .await
+            .unwrap();
+        assert_eq!(string, "says hello");
 
-        server.race(client).await
+        cancelation_token.complete();
+        server.await
     })
 }
 

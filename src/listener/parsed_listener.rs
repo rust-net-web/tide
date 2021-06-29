@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use super::UnixListener;
 use super::{ListenInfo, Listener, TcpListener};
-use crate::Server;
+use crate::{CancelationToken, Server};
 
 use async_std::io;
 use std::fmt::{self, Debug, Display, Formatter};
@@ -52,11 +52,11 @@ where
         }
     }
 
-    async fn accept(&mut self) -> io::Result<()> {
+    async fn accept(&mut self, cancelation_token: CancelationToken) -> io::Result<()> {
         match self {
             #[cfg(unix)]
-            Self::Unix(u) => u.accept().await,
-            Self::Tcp(t) => t.accept().await,
+            Self::Unix(u) => u.accept(cancelation_token).await,
+            Self::Tcp(t) => t.accept(cancelation_token).await,
         }
     }
 

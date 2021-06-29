@@ -1,7 +1,7 @@
 use super::{is_transient_error, ListenInfo};
 
 use crate::listener::Listener;
-use crate::{log, Server};
+use crate::{CancelationToken, log, Server};
 
 use std::fmt::{self, Display, Formatter};
 
@@ -86,7 +86,7 @@ where
         Ok(())
     }
 
-    async fn accept(&mut self) -> io::Result<()> {
+    async fn accept(&mut self, _cancelation_token: CancelationToken) -> io::Result<()> {
         let server = self
             .server
             .take()
