@@ -6,6 +6,8 @@ use crate::http::{
 use crate::{utils::async_trait, Middleware, Next, Request};
 use std::time::Duration;
 
+use std::sync::{Arc, RwLock};
+
 use async_session::{
     base64,
     hmac::{Hmac, Mac, NewMac},
@@ -86,15 +88,18 @@ where
             .and_then(|cookie| self.verify_signature(cookie.value()).ok());
 
         let mut session = self.load_or_create(cookie_value).await;
-
         if let Some(ttl) = self.session_ttl {
             session.expire_in(ttl);
         }
 
         let secure_cookie = request.url().scheme() == "https";
-        request.set_ext(session.clone());
+
+        let session_lock = Arc::new(RwLock::new(session));
+        request.set_ext(session_lock.clone());
 
         let mut response = next.run(request).await;
+
+        let session = Arc::try_unwrap(session_lock).unwrap().into_inner().unwrap();
 
         if session.is_destroyed() {
             if let Err(e) = self.store.destroy_session(session).await {

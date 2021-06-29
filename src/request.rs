@@ -4,6 +4,7 @@ use route_recognizer::Params;
 
 use std::ops::Index;
 use std::pin::Pin;
+use std::sync::{Arc, RwLock};
 
 #[cfg(feature = "cookies")]
 use crate::cookies::CookieData;
@@ -487,10 +488,12 @@ impl<State> Request<State> {
     /// This method will panic if a tide::sessions:SessionMiddleware has not
     /// been run.
     #[cfg(feature = "sessions")]
-    pub fn session(&self) -> &crate::sessions::Session {
-        self.ext::<crate::sessions::Session>().expect(
+    pub fn session(&self) -> std::sync::RwLockReadGuard<'_, crate::sessions::Session> {
+        let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
-        )
+        );
+
+        lock.read().unwrap()
     }
 
     /// Retrieves a mutable reference to the current session.
@@ -500,10 +503,12 @@ impl<State> Request<State> {
     /// This method will panic if a tide::sessions:SessionMiddleware has not
     /// been run.
     #[cfg(feature = "sessions")]
-    pub fn session_mut(&mut self) -> &mut crate::sessions::Session {
-        self.ext_mut().expect(
+    pub fn session_mut(&mut self) -> std::sync::RwLockWriteGuard<'_, crate::sessions::Session> {
+        let lock = self.ext::<Arc<RwLock<crate::sessions::Session>>>().expect(
             "request session not initialized, did you enable tide::sessions::SessionMiddleware?",
-        )
+        );
+
+        lock.write().unwrap()
     }
 
     /// Get the length of the body stream, if it has been set.
