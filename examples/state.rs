@@ -18,6 +18,7 @@ impl State {
 async fn main() -> tide::Result<()> {
     tide::log::start();
     let mut app = tide::with_state(State::new());
+    app.with(tide::log::LogMiddleware::new());
     app.at("/").get(|req: tide::Request<State>| async move {
         let state = req.state();
         let value = state.value.load(Ordering::Relaxed);

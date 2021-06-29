@@ -32,6 +32,7 @@ async fn test_server_listen(logger: &mut logtest::Logger) {
 
 async fn test_only_log_once(logger: &mut logtest::Logger) -> tide::Result<()> {
     let mut app = tide::new();
+    app.with(tide::log::LogMiddleware::new());
     app.at("/").nest({
         let mut app = tide::new();
         app.at("/").get(|_| async { Ok("nested") });

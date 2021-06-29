@@ -4,6 +4,7 @@ use tide::Request;
 async fn main() -> Result<(), std::io::Error> {
     tide::log::start();
     let mut app = tide::new();
+    app.with(tide::log::LogMiddleware::new());
 
     app.at("/").get(|request: Request<_>| async move {
         Ok(format!(

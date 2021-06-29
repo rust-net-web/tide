@@ -7,6 +7,7 @@ use tide::{Body, Request, Response, Result, StatusCode};
 async fn main() -> Result<()> {
     tide::log::start();
     let mut app = tide::new();
+    app.with(tide::log::LogMiddleware::new());
 
     app.with(After(|mut res: Response| async {
         if let Some(err) = res.downcast_error::<async_std::io::Error>() {

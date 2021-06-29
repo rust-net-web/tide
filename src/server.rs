@@ -109,8 +109,6 @@ where
             middleware: Arc::new(vec![
                 #[cfg(feature = "cookies")]
                 Arc::new(cookies::CookiesMiddleware::new()),
-                #[cfg(feature = "logger")]
-                Arc::new(log::LogMiddleware::new()),
             ]),
             state,
         }
