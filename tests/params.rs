@@ -13,7 +13,7 @@ async fn test_missing_param() -> tide::Result<()> {
 
     let req = http_types::Request::new(Method::Get, Url::parse("http://example.com/")?);
     let res: http_types::Response = server.respond(req).await?;
-    assert_eq!(res.status(), 500);
+    assert_eq!(res.status(), 400);
     Ok(())
 }
 

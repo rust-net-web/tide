@@ -9,7 +9,7 @@ use std::pin::Pin;
 use crate::cookies::CookieData;
 #[cfg(feature = "cookies")]
 use crate::http::cookies::Cookie;
-use crate::http::format_err;
+use crate::http::format_err_status;
 use crate::http::headers::{self, HeaderName, HeaderValues, ToHeaderValues};
 use crate::http::{self, Body, Method, Mime, StatusCode, Url, Version};
 use crate::Response;
@@ -298,7 +298,7 @@ impl<State> Request<State> {
             .iter()
             .rev()
             .find_map(|params| params.find(key))
-            .ok_or_else(|| format_err!("Param \"{}\" not found", key.to_string()))
+            .ok_or_else(|| format_err_status!(400, "Param \"{}\" not found", key.to_string()))
     }
 
     /// Parse the URL query component into a struct, using [serde_qs](https://docs.rs/serde_qs). To
