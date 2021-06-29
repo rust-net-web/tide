@@ -1,7 +1,7 @@
-//! Miscellaneous utilities.
+//! Miscellaneous middleware utilities.
 
+use crate::utils::async_trait;
 use crate::{Middleware, Next, Request, Response};
-pub use async_trait::async_trait;
 use std::future::Future;
 
 /// Define a middleware that operates on incoming requests.
