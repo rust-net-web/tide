@@ -182,8 +182,7 @@ where
         M: Middleware<State>,
     {
         log::trace!("Adding middleware {}", middleware.name());
-        let m = Arc::get_mut(&mut self.middleware)
-            .expect("Registering middleware is not possible after the Server has started");
+        let m = Arc::make_mut(&mut self.middleware);
         m.push(Arc::new(middleware));
         self
     }
