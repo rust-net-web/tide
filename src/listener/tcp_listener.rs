@@ -9,6 +9,10 @@ use async_std::net::{self, SocketAddr, TcpStream};
 use async_std::prelude::*;
 use async_std::{io, task};
 
+use futures_util::future::Either;
+
+use waitgroup::{WaitGroup, Worker};
+
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::net::TcpListener]. It is implemented as an
 /// enum in order to allow creation of a tide::listener::TcpListener
@@ -44,16 +48,30 @@ impl<State> TcpListener<State> {
     }
 }
 
-fn handle_tcp<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: TcpStream) {
+fn handle_tcp<State: Clone + Send + Sync + 'static>(
+    app: Server<State>,
+    stream: TcpStream,
+    wait_group_worker: Worker,
+) {
     task::spawn(async move {
+        let _wait_group_worker = wait_group_worker;
+
         let local_addr = stream.local_addr().ok();
         let peer_addr = stream.peer_addr().ok();
 
-        let fut = async_h1::accept(stream, |mut req| async {
-            req.set_local_addr(local_addr);
-            req.set_peer_addr(peer_addr);
-            app.respond(req).await
-        });
+        let opts = async_h1::ServerOptions {
+            stopper: app.stopper.clone(),
+            ..Default::default()
+        };
+        let fut = async_h1::accept_with_opts(
+            stream,
+            |mut req| async {
+                req.set_local_addr(local_addr);
+                req.set_peer_addr(peer_addr);
+                app.respond(req).await
+            },
+            opts,
+        );
 
         if let Err(error) = fut.await {
             log::error!("async-h1 error", { error: error.to_string() });
@@ -98,7 +116,13 @@ where
             .take()
             .expect("`Listener::bind` must be called before `Listener::accept`");
 
-        let mut incoming = listener.incoming();
+        let incoming = listener.incoming();
+        let mut incoming = if let Some(stopper) = server.stopper.clone() {
+            Either::Left(stopper.stop_stream(incoming))
+        } else {
+            Either::Right(incoming)
+        };
+        let wait_group = WaitGroup::new();
 
         while let Some(stream) = incoming.next().await {
             match stream {
@@ -111,10 +135,13 @@ where
                 }
 
                 Ok(stream) => {
-                    handle_tcp(server.clone(), stream);
+                    handle_tcp(server.clone(), stream, wait_group.worker());
                 }
             };
         }
+
+        wait_group.wait().await;
+
         Ok(())
     }
 

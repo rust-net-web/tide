@@ -10,6 +10,10 @@ use async_std::path::PathBuf;
 use async_std::prelude::*;
 use async_std::{io, task};
 
+use futures_util::future::Either;
+
+use waitgroup::{WaitGroup, Worker};
+
 /// This represents a tide [Listener](crate::listener::Listener) that
 /// wraps an [async_std::os::unix::net::UnixListener]. It is implemented as an
 /// enum in order to allow creation of a tide::listener::UnixListener
@@ -45,16 +49,30 @@ impl<State> UnixListener<State> {
     }
 }
 
-fn handle_unix<State: Clone + Send + Sync + 'static>(app: Server<State>, stream: UnixStream) {
+fn handle_unix<State: Clone + Send + Sync + 'static>(
+    app: Server<State>,
+    stream: UnixStream,
+    wait_group_worker: Worker,
+) {
     task::spawn(async move {
+        let _wait_group_worker = wait_group_worker;
+
         let local_addr = unix_socket_addr_to_string(stream.local_addr());
         let peer_addr = unix_socket_addr_to_string(stream.peer_addr());
 
-        let fut = async_h1::accept(stream, |mut req| async {
-            req.set_local_addr(local_addr.as_ref());
-            req.set_peer_addr(peer_addr.as_ref());
-            app.respond(req).await
-        });
+        let opts = async_h1::ServerOptions {
+            stopper: app.stopper.clone(),
+            ..Default::default()
+        };
+        let fut = async_h1::accept_with_opts(
+            stream,
+            |mut req| async {
+                req.set_local_addr(local_addr.as_ref());
+                req.set_peer_addr(peer_addr.as_ref());
+                app.respond(req).await
+            },
+            opts,
+        );
 
         if let Err(error) = fut.await {
             log::error!("async-h1 error", { error: error.to_string() });
@@ -96,7 +114,13 @@ where
             .take()
             .expect("`Listener::bind` must be called before `Listener::accept`");
 
-        let mut incoming = listener.incoming();
+        let incoming = listener.incoming();
+        let mut incoming = if let Some(stopper) = server.stopper.clone() {
+            Either::Left(stopper.stop_stream(incoming))
+        } else {
+            Either::Right(incoming)
+        };
+        let wait_group = WaitGroup::new();
 
         while let Some(stream) = incoming.next().await {
             match stream {
@@ -109,10 +133,13 @@ where
                 }
 
                 Ok(stream) => {
-                    handle_unix(server.clone(), stream);
+                    handle_unix(server.clone(), stream, wait_group.worker());
                 }
             };
         }
+
+        wait_group.wait().await;
+
         Ok(())
     }
 

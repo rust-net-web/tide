@@ -98,6 +98,8 @@ pub use server::Server;
 
 pub use http_types::{self as http, Body, Error, Status, StatusCode};
 
+pub use stopper;
+
 /// Create a new Tide server.
 ///
 /// # Examples

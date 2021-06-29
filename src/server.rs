@@ -3,6 +3,8 @@
 use async_std::io;
 use async_std::sync::Arc;
 
+use stopper::Stopper;
+
 #[cfg(feature = "cookies")]
 use crate::cookies;
 use crate::listener::{Listener, ToListener};
@@ -38,6 +40,7 @@ pub struct Server<State> {
     /// We don't use a Mutex around the Vec here because adding a middleware during execution should be an error.
     #[allow(clippy::rc_buffer)]
     middleware: Arc<Vec<Arc<dyn Middleware<State>>>>,
+    pub(crate) stopper: Option<Stopper>,
 }
 
 impl Server<()> {
@@ -113,6 +116,7 @@ where
                 Arc::new(log::LogMiddleware::new()),
             ]),
             state,
+            stopper: None,
         }
     }
 
@@ -286,6 +290,7 @@ where
             router,
             state,
             middleware,
+            stopper: _,
         } = self.clone();
 
         let method = req.method().to_owned();
@@ -317,6 +322,29 @@ where
     pub fn state(&self) -> &State {
         &self.state
     }
+
+    /// Stops the server when given `stopper` stops.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use tide::stopper::Stopper;
+    ///
+    /// let mut app = tide::new();
+    ///
+    /// let stopper = Stopper::new();
+    ///
+    /// app.with_stopper(stopper.clone());
+    ///
+    /// // Runs server...
+    ///
+    /// // When something happens
+    /// stopper.stop();
+    /// ```
+    pub fn with_stopper(&mut self, stopper: Stopper) -> &mut Self {
+        self.stopper = Some(stopper);
+        self
+    }
 }
 
 impl<State: Send + Sync + 'static> std::fmt::Debug for Server<State> {
@@ -331,6 +359,7 @@ impl<State: Clone> Clone for Server<State> {
             router: self.router.clone(),
             state: self.state.clone(),
             middleware: self.middleware.clone(),
+            stopper: self.stopper.clone(),
         }
     }
 }
