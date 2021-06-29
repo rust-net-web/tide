@@ -25,12 +25,14 @@ rustdoc-args = ["--cfg", "feature=\"docs\""]
 
 [features]
 default = ["h1-server", "cookies", "logger", "sessions"]
+docs = ["unstable"]
+unstable = []
+
 cookies = ["http-types/cookies"]
 h1-server = ["async-h1"]
+lambda = ["lambda_http", "http", "http-types/hyperium_http"]
 logger = ["femme"]
-docs = ["unstable"]
 sessions = ["async-session", "cookies"]
-unstable = []
 
 [dependencies]
 async-h1 = { version = "2.3.0", optional = true }
@@ -48,6 +50,10 @@ pin-project-lite = "0.2.0"
 route-recognizer = "0.2.0"
 serde = "1.0.117"
 serde_json = "1.0.59"
+
+# feature = lambda
+lambda_http = { version = "0.3.0", optional = true }
+http = { version = "0.2.4", optional = true }
 
 [dev-dependencies]
 async-std = { version = "1.6.5", features = ["unstable", "attributes"] }

@@ -76,6 +76,9 @@ mod route;
 mod router;
 mod server;
 
+#[cfg(feature = "lambda")]
+mod lambda;
+
 pub mod convert;
 pub mod listener;
 pub mod log;
